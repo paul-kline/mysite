@@ -1,0 +1,62 @@
+@keyframes yourAnimation1 {
+  0% {
+    transform: rotate(0) translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0) translateX(0) 1s forwards ease-in;
+    opacity: 1;
+  }
+}
+
+.elementToAnimate1 {
+  animation: yourAnimation1 1s forwards 0s ease;
+}
+
+@keyframes yourAnimation2 {
+  0% {
+    transform: rotate(0) translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+.elementToAnimate2 {
+  opacity: 0;
+  animation: yourAnimation2 1.5s forwards 0.5s ease;
+}
+
+@keyframes yourAnimation3 {
+  0% {
+    transform: rotate(0);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0);
+    opacity: 1;
+  }
+}
+
+.elementToAnimate3 {
+  opacity: 0;
+  animation: yourAnimation3 1s forwards 0.7s linear;
+}
+
+@keyframes menuanimation {
+  0% {
+    /* transform: rotate(0) translateY(-90%); */
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0) translateY(0);
+    opacity: 1;
+  }
+}
+
+.menuanimation {
+  opacity: 0;
+  animation: menuanimation 1.5s forwards 0.25s ease;
+}

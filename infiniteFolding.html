@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="./css.css" />
+
+    <title>Haskell: Infinite Folding</title>
+    <link href="resources/prism.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container language-haskell">
+    <h1>Infinite Folds.</h1>
+    <p>
+      You may come across the phrase <span style="font-style: italic;">"foldr works on infinite lists but not
+      foldl." </span> Well that seems strange for a couple reasons.
+      <ol type="a">
+          <li>
+        Why would you ever try to fold up an infite list? Wouldn't it always
+    take forever no matter which way you fold?  
+      </li>
+      <li>Why would it matter which way
+        you fold? It's still infinite!</li></ol>
+    </p>
+     <p>Let's explore.</p>     
+     <p>First, an exercise for the reader: Recall the types of foldl and foldr.
+      I'm going to put them below,
+    but try to do this on your own before you look.
+    </p>
+    <div class="accordion" id="accordionExample">
+                <button class=" mb-0 btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne">
+                  Show foldr/foldl types
+                </button>
+            <div id="collapseOne" class="collapse" data-parent="#accordionExample">
+<pre ><code >foldl :: (b -> a -> b) -> b -> [a] -> b 
+
+foldr :: (a -> b -> b) -> b -> [a] -> b
+</code></pre>
+                    
+            </div>
+    </div>
+        
+     <p >
+       **Note that we're
+      defining foldl/r specific for lists. The real foldl/r type works on any
+      structure that is "Foldable".
+     </p> 
+     <p >
+       The types are almost identical. And indeed
+      there are severe similarities between foldl and foldr. They both go over an
+      entire list to create some new value from all the values in the list. You
+      have to give foldl and foldr 3 things:
+     </p> 
+     <ol><li>A function. How do I combine the
+        current "accumulating" value with an element of the list to get a new
+        accumulated value? For example, if you wanted to check that every character
+        in a string was numeric a good function to pass foldl would be: (\acc c ->
+        acc && ( c `elem` ['0'..'9'])). The final value we want is a Bool. This
+        function takes whatever the current true/false state is and combines it with
+        a char to give a new current state. If at any point a char is not a digit,
+        the false will carry through all the way till the end. aka True && False &&
+        True && True && True && True = False. Anyway, our types line up. (Bool ->
+        Char -> Bool) matches (b -> a -> b), So we'd be in good shape.</li>
+      <li>An initial
+          accumulation value. For example, if you are summing up a list of numbers,
+          you would give 0 as your starting value. If you were checking if all chars
+          in a string are digits, you would start with True (and wait for a char to
+          break it).</li>
+          <li>The list to be folded. AKA The list to iterate through. e.g.
+              "8584h"</li>
+    </ol>  There are two differences between foldl and foldr:
+    <ol>
+      <li>In the
+          function we pass to foldl/r that combines the accumulating value and an
+          element of the list, acc is the first (or on the left side) parameter and
+          acc is the second (or right side) parameter for foldr. A nit-picky
+          difference.</li>
+          <li>foldl begins on the left side of the list. foldr starts on
+              the right side.</li>
+    </ol> 
+    <p >
+      Now that we are a bit re-familiarized with folds, let's look
+      at an example of why you might do a fold using an infinite list. You would,
+      of course, be correct to say that something like <code>foldr (+) [1..] 0</code> or 
+      <code >foldl (+) [1..] 0</code> would both take a literal forever. But let's say wanted a
+      function that gives you the sum of all Integers up to a given number.
+    </p> Here's
+    a straightforward implementation: 
+    <pre ><code >sumUpTo :: Int -> Int 
+sumUpTo n = sum [1..n]</code></pre>
+    A more interesting way: 
+    <pre ><code>sumUpTo' :: Int -> Int 
+sumUpTo' n = let listOfSums = foldr (\x acc -> sum [0..x] : acc ) [] [0..] in 
+    listofSums !! n
+    </code>
+    </pre>
+    <p>
+      A bit roundabout and inefficient, but interesting and serves as a simple
+    example of how one could find use in folding an infinte list. We fold over
+    an infinite list to <i>create</i> a list. listOfSums is a list where each element
+    is a sum of the ints up to its index.</p> 
+    <p>
+    Here are the first ten elements of
+    listOfSums: <code>[0,1,3,6,10,15,21,28,36,45]</code>.</p> 
+    
+    <p>Once we define this list, we simply
+    have to access the corresponding index. No other thinking needed. It was
+    very important that we chose foldr instead of foldl to do this. Wait a
+    second--if anything, it seems like the reverse would be true! Why would
+    starting on the right side which would be INFINITY of an infinite list work,
+    but starting at the known 0 side would end up taking ininite time? There is
+    not another way to understand this than to look at how foldl and foldr work
+    under the hood.</p> 
+    Excersie: Define foldl. Recall: <code>foldl :: (b -> a -> b) -> b
+    -> [a] -> b</code> 
+    Additionally recall that foldl must begin by combining the
+    default accumulation value with the head (leftmost part) of the list and
+    then combine that with the next elem, etc. Moving left -> right. (spoiler
+    alert: answer below) 
+    
+    <div class="accordion" id="foldldef">
+        <button class=" mb-0 btn btn-link" type="button" data-toggle="collapse" data-target="#collapsefoldl">
+          Show Answer
+        </button>
+    <div id="collapsefoldl" class="collapse" data-parent="#foldldef">
+<pre ><code >foldl :: (b -> a -> b) -> b -> [a] -> b 
+foldl _ acc [] = acc 
+foldl f acc (x:xs) = foldl f (f acc x) xs</code></pre>
+            
+    </div>
+</div>
+    
+     <p>We have to pass the value
+    from combining acc with the head of the list to pass to the next call to
+    foldl. When there are no more things to combine, return the accumulated
+    value. Now let's define foldr as well.</p>
+     Excersie: Define foldr. Recall: <code>foldr :: (a -> b -> b) -> b -> [a] -> b</code> 
+     Additionally recall that foldr must begin
+    by combining the default accumulation value with the rightmost part of the
+    list and then combine that with the element to its left, etc. Moving from
+    right to left this time. 
+    
+    <div class="accordion" id="foldrdef">
+        <button class=" mb-0 btn btn-link" type="button" data-toggle="collapse" data-target="#collapsefoldr">
+          Show Answer
+        </button>
+    <div id="collapsefoldr" class="collapse" data-parent="#foldrdef">
+<pre ><code >foldr :: (a -> b -> b) -> b -> [a] -> b 
+foldr _ acc [] = acc 
+foldr f acc (x:xs) = f x (foldr f acc xs)</code></pre>
+            
+    </div>
+</div>
+
+
+     Ahah! We pass the
+    untouched acc into the recursive call to foldr. In this way, the original
+    acc value will end up all the way on the right side of the list before any
+    combinations happen. To understand these definitions more, let's look at a
+    simple step by step evaluation of <code>foldl (+) [1,2,3] 0</code> and 
+    <code>foldr (+) [1,2,3] 0</code>. To do this, all we have to do is match the pattern and replace. repeat as
+    necessary. 
+<pre><code>foldl (+) 0 [1,2,3] -- matches: foldl  f acc (x: xs  ) = foldl  f  ( f acc x)  xs 
+  =                 --          foldl (+) 0  (1:[2,3]) = foldl (+) ((+) 0  1) [2,3]
+foldl (+) ((+) 0 1) [2,3] --rewrite (+) for readability 
+  = 
+foldl (+) (0 + 1) [2,3] -- matches: foldl  f   acc  (x: xs) = foldl ( f   acc  x)  xs 
+  =                     --          foldl (+) (0+1) (2:[3]) = foldl ((+) (0+1) 2) [3]
+foldl (+) ((+) (0 + 1) 2) [3] --rewrite (+) for readability 
+  =
+foldl (+) ((0 + 1) + 2) [3] -- matches: foldl  f     acc    (x:xs) = foldl ( f     acc    x) xs 
+  =                         --          foldl (+) ((0+1)+2) (3:[]) = foldl ((+) ((0+1)+2) 3) []
+foldl (+) ((+) ((0 + 1) + 2) 3) [] --rewrite (+) for readability 
+  =
+foldl (+) (((0 + 1) + 2) + 3) [] -- matches: foldl  _       acc      [] =     acc 
+  =                              --          foldl (+) (((0+1)+2)+3) [] = (((0+1)+2)+3)
+(((0 + 1) + 2) + 3) --full simplification 
+  = 
+6</code></pre>
+    
+    Now lets look at: <code>foldr (+) 0 [1,2,3]</code>
+    <pre><code>
+foldr (+) 0 [1,2,3] --matches: foldr  f acc (x:  xs ) =  f  x (foldr  f acc  xs ) 
+  =                 --         foldr (+) 0  (1:[2,3]) = (+) 1 (foldr (+) 0 [2,3])   
+(+) 1 (foldr (+) 0 [2,3]) -- applying (+) requires evaluation of second arg
+  =
+1 + (foldr (+) 0 [2,3]) -- the foldr portion matches:
+                        -- foldr  f acc (x: xs) =  f  x (foldr  f acc xs ) 
+                        -- foldr (+) 0  (2:[3]) = (+) 2 (foldr (+) 0 [0] )
+  =
+1 + ((+) 2 (foldr (+) 0 [3])) -- applying (+) requires evaluation of second arg 
+  =
+1 + (2 + (foldr (+) 0 [3])) -- foldr portion matches:
+                            -- foldr  f acc (x:xs) =  f  x (foldr  f acc xs) 
+                            -- foldr (+) 0  (3:[]) = (+) 3 (foldr (+) 0  [])
+  =
+1 + (2 + ((+) 3 (foldr (+) 0 []))) -- applying (+) requires evaluation of second arg
+1 + (2 + (3 + (foldr (+) 0 []))    -- foldr portion matches base case:
+                                   -- foldr  _ acc [] = acc 
+                                   -- foldr (+) 0  [] = 0
+  =
+1 + (2 + (3 + (0)) --apply (+) as far as we can: full simplification 
+  =
+6</code></pre>
+    <p>
+
+
+    </p>
+    <p>
+      So they both ended up with the
+      same value-- no surprises there, (+) is communitive. But as one might've guessed, we start
+      combining left to right for foldl and we combined right to left in foldr
+      (note the parenthesis in the near final expressions). For (+) it didn't
+      matter, but think about what the results of: <code>foldl (-) 0 [1,2,3]</code> and 
+      <code>foldr (-) 0 [1,2,3]</code> 
+    </p>
+    <p>
+      -6 /= 2 !!! 
+    </p>
+    <p>
+      You also may have noticed something strange but
+      critically important to solving our riddle. Why didn't we evaluate any
+      (+) expressions until the end? Well, it makes sense for the evaluation of foldr;
+      The parenthesis made us expand foldr to get the value we were supposed to
+      (+) first. We can't add 1 + (2 + x) until we know what x is because the
+      bossy parenthesis says we have to do (2 + x) first.
+    </p>
+    <p>
+      But why didn't we
+      evaluate when we had the chance in the evaluation of foldl? I had everything I needed to 
+      find out what <code>((0 + 1) + 2)</code> is, for example.
+    </p>
+    <p >
+      Answer: HASKELL IS LAZY. By default, it won't compute anything unless absolutely necessary.
+      It didn't know you would actually need that value yet, so instead of calculating
+      it, it just remembered the work needed to get it. aka <code>((0 + 1) + 2)</code> 
+      is what I'm supposed to do should anything down the line actually need this expression's value.  
+      This is also refered to as a <b>thunk</b> -- remembering the steps to
+      compute a value rather than the value. If you look closely throughout the
+      evaluation of foldl, The addition thunk never <i>needs</i> to be evaluated until
+      the statement: <code>(((0 + 1) + 2) + 3)</code> Which forces the evaluation because we're
+      asking to please show the expression which stemmed all the
+      way back from our initial ask of <code>foldl (+) 0 [1,2,3]</code>. 
+      
+    </p>
+<p>
+      Now to finally answer
+      the question! let's look at the evaluation of something slightly larger.
+      Recall sumUpTo':
+  <pre ><code>sumUpTo' :: Int -> Int 
+  sumUpTo' n = let listOfSums = foldr (\x acc -> sum [0..x] : acc ) [] [0..] in 
+      listofSums !! n
+  </code>
+  </pre>
+
+</p>
+
+Let's evaluate the
+    expression: <code>sumUpTo' 1</code>:
+<pre><code>
+sumUpTo' 1 --matches our one pattern to become: 
+  =
+let listOfSums = foldr (\x acc -> sum [0..x] : acc) [] [0..] in listofSums !! 1
+</code></pre> 
+    <p>
+      So Haskell, being as lazy as it can get away with, sees that you are
+      accessing index 1 of <code>listOfSums</code>. So it will do ONLY the work
+      necessary to do that. aka the first 2 elements of listOfSums. To keep things a little
+      shorter lets say: <code>f = (\x acc -> sum [0..x] : acc)</code>
+      
+    </p>
+    <p>Computing sumUpTo only far enough to get the first 2 elements:</p>
+<pre><code>listOfSums 
+  = 
+foldr (\x acc -> sum [0..x] : acc) [] [0..]
+  =
+foldr f [] [0..] --the pattern we match requires we know if 
+                 --[0..] if empty or not. So we evaluate [0..] 
+                 --just far enough to know if it's [].
+  =
+foldr f [] (0:[1..]) -- matches foldr pattern: 
+                     -- foldr f acc (x:  xs ) = f x (foldr f acc  xs ) 
+                     -- foldr f  [] (0:[1..]) = f 0 (foldr f [] [1..])
+f 0
+    (foldr f [] [1..]) f 0 (foldr f [] [1..]) --remember because we're lazy, we
+    don't need to evalute the arguements to f, we can apply f NOW. If we end up
+    needing the args, we'll get them then. --replacing f (\x acc -> sum [0..x] :
+    acc) 0 (foldr f [] [1..]) --function application (twice technically thanks
+    to currying) sum [0..0] : (foldr f [] [1..])) sum [0] : (foldr f [] [1..]))
+    0 : (foldr f [] [1..])) --ahah! I have the first element of the list. But I
+    have to keep going. I need first first 2, bare minimum --compute the head of
+    [1..] because foldr uses it. I am forced to evaluate it. But no more work
+    than that will I do! 0 : (foldr f [] 1:[2..])) --matched foldr pattern.
+    replace. 0 : (f 1 (foldr [] [2..])) --again, I have 2 args for f and can
+    apply it. --replacing f: 0 : ((\x acc -> sum [0..x] : acc) 1 (foldr []
+    [2..])) --applying 0 : (sum [0..1] : (foldr [] [2..])) --list expansiopn 0 :
+    (sum [0,1] : (foldr [] [2..])) --sum 0 : (1 : (foldr [] [2..])) --STOP!!!!!!
+    why? I have all I need now to compute: 0 : (1 : (foldr [] [2..])) !! 1 1
+</code></pre>
+     Now
+    let's look at what would happen if we defined listOfSums using foldl:
+    listOfSums = foldl (\x acc -> sum [0..x] : acc) [] [0..] Again, we would
+    only need to compute the first 2 elements of listOfSums. foldl (\x acc ->
+    sum [0..x] : acc) [] [0..] --let's again say f = (\x acc -> sum [0..x] :
+    acc) for brevity. foldl f [] [0..] -- matches pattern: foldl f acc (x:xs) =
+    foldl f (f acc x) xs when expaned slightly foldl f [] (0:[1..]) --pattern
+    replace foldl f (f [] 0) [1..] --we evaluate foldl again matching the same
+    pattern. foldl f (f [] 0) [1..] -- [1..] is expanded by 1 to match the
+    pattern for foldl again. foldl f (f [] 0) (1:[2..]) --pattern replace foldl
+    f (f (f [] 0) 1) [2..] --starting to not look so good.. expand [2..] by 1 to
+    match pattern definition for foldl. foldl f (f (f [] 0) 1) (2:[3..])
+    --pattern replace foldl f (f (f (f [] 0) 1) 2 [3..] --see what the problem
+    is? I can't reach the base case for the foldl pattern until the list is
+    empty: foldl _ acc [] = acc -- unfortunately, moving through the list [3..]
+    as we have been will never become empty. We will never reach the end or our
+    base case! conclusion: Should you ever require to fold an infinte list, you
+    know the right way to go. -}
+
+    <script src="/resources/prism.js"></script>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+      integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+      integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+      crossorigin="anonymous"
+    ></script>
+  
+  
+</div>
+</body>
+</html>
